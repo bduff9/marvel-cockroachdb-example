@@ -1,0 +1,56 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1")
+    link(href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet")
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js")
+    title=title
+  body
+    div.container
+      h1 <a href="https://en.wikipedia.org/wiki/The_Blip">The Blip</a> Marvel Character List
+      small
+        a(href="https://marvel.com") Data provided by Marvel. © 2021 MARVEL
+      br
+      button.btn.btn-primary(id="sync-btn" onclick="syncAll()") Sync Character Data from Marvel
+      table
+        tr
+          th Image
+          th Name
+          th Blipped
+        each c in characters
+          tr
+            td
+              img(src=c.thumbnail height="32px")
+            td= c.name
+            if c.blip === true
+              td
+                button.btn.btn-danger(id=`btn-${c.marvelId}` onclick=`callApi("unblip", ${c.marvelId})`) Blipped (Click to Unblip)
+            else if c.blip === false
+              td
+                button.btn.btn-success(id=`btn-${c.marvelId}` onclick=`callApi("blip", ${c.marvelId})`) Safe (Click to Blip)
+            else
+              td
+                button.btn.btn-secondary(id=`btn-${c.marvelId}` onclick=`callApi("blip", ${c.marvelId})`) Unknown (Click to Blip)
+    script(type="text/javascript").
+      async function syncAll() {
+        document.getElementById( "sync-btn" ).innerText = "Syncing...";
+        let result = await fetch( `/sync` ).then( r => r.json() );
+        // Reload the page to grab the new data
+        location.reload();
+      }
+      async function callApi( api, id ) {
+        let result = await fetch( `/${api}/${id}` ).then( r => r.json() );
+        let elem = document.getElementById( `btn-${id}` );
+        if( api === "blip" ) {
+          elem.innerText = "Unblip";
+          elem.classList.remove( "btn-success", "btn-secondary" );
+          elem.classList.add( "btn-danger" );
+          elem.onclick = () => callApi( "unblip", id );
+        } else {
+          elem.innerText = "Blip";
+          elem.classList.remove( "btn-danger", "btn-secondary" );
+          elem.classList.add( "btn-success" );
+          elem.onclick = () => callApi( "blip", id );
+        }
+      }
